@@ -23,7 +23,7 @@
 
 <div class="panel" id="coinCalculator"><div class="section-head"><h2>🧮 Coin calculator</h2><span class="muted" id="calcNu">Nu. 100.00</span></div><input class="range" id="calcCoins" type="range" min="0" max="200000" step="100" value="400" oninput="updateCoinCalc()"><div class="fieldrow" style="align-items:center"><b id="calcCoinLabel">400 coins</b><span class="muted">Drag to convert · 4 coins = Nu.1</span></div></div></aside></main><div class="footer">NBA DICE · SIX DICE · TWO PICKS</div>
 <div id="modalRoot"></div><div id="toastRoot"></div></div>
-<div id="nameGate" class="name-gate">
+<div id="nameGate" class="name-gate hidden">
   <form class="name-gate-card" onsubmit="event.preventDefault();saveName()">
     <div class="brand"><div class="brand-mark">⚄</div><div>NBA <span>DICE</span></div></div>
     <div class="eyebrow">WELCOME TO THE TABLE</div>
@@ -88,54 +88,51 @@ setInterval(()=>{if(mode==='group'&&seconds>0){seconds--;let m=String(Math.floor
 let gameHistory=[];function newGameId(){return 'NBA-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,7).toUpperCase()}function recordGame(vals,bet,matches,payout){const d=new Date();gameHistory.unshift({id:newGameId(),name:playerName||'Player',mode:mode,pick1:pick1,pick2:pick2,dice:vals.slice(),bet:bet,matches:matches,payout:payout,date:d.toLocaleDateString(),time:d.toLocaleTimeString()});renderMyHistory()}function playSound(kind){if(!soundEnabled)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const x=new C(),o=x.createOscillator(),g=x.createGain();o.connect(g);g.connect(x.destination);o.frequency.value=kind==='win'?740:kind==='roll'?250:170;g.gain.setValueAtTime(.001,x.currentTime);g.gain.exponentialRampToValueAtTime(.1,x.currentTime+.03);g.gain.exponentialRampToValueAtTime(.001,x.currentTime+(kind==='win'?.4:.18));o.start();o.stop(x.currentTime+(kind==='win'?.41:.19));o.onended=()=>x.close()}catch(e){}}function renderMyHistory(){const r=$('myHistoryList');if(!r)return;r.innerHTML=gameHistory.length?gameHistory.map(g=>'<details class="adminrow"><summary><b>'+g.id+'</b> · '+g.date+' '+g.time+' · '+g.payout.toLocaleString()+' coins</summary><div class="muted">Player: '+escapeHtml(g.name)+' · '+g.mode+'<br>Picked: '+g.pick1+' + '+g.pick2+'<br>Dice: '+g.dice.join(', ')+'<br>Bet: '+g.bet+' · Matches: '+g.matches+' · Payout: '+g.payout+'</div></details>').join(''):'<p class="notice">No rolls recorded yet.</p>'}function openGeneralHistory(){openModal('<h3>🔒 General game data</h3><p>Host access required.</p><label class="label">Host password</label><input id="historyPass" class="field" type="password" placeholder="Password"><button class="btn gold" style="width:100%;margin-top:12px" onclick="unlockGeneralHistory()">Unlock general data</button>')}function unlockGeneralHistory(){if($('historyPass').value!=='2004'){toast('Incorrect password');return}closeModal();const rows=gameHistory.length?gameHistory.map(g=>'<details class="adminrow"><summary><b>'+escapeHtml(g.name)+'</b> · '+g.id+' · '+g.date+' '+g.time+'</summary><div class="muted">Mode: '+g.mode+'<br>Picked: '+g.pick1+' + '+g.pick2+'<br>Dice: '+g.dice.join(', ')+'<br>Bet: '+g.bet+' · Matches: '+g.matches+' · Payout: '+g.payout+'</div></details>').join(''):'<p class="notice">No game records in this browser session.</p>';openModal('<h3>General game data · all recorded rolls</h3>'+rows+'<button class="btn dark" onclick="closeModal()">Close</button>')}function buildSeparatePages(){
  const layout=document.querySelector('.layout'),main=document.querySelector('.maincol'),side=document.querySelector('.sidecol');
  if(!layout||!main||!side)return;
+ const defs={home:'Home',game:'Play game',group:'Group room',shop:'Coin shop',chat:'Chat with host',history:'Game history',settings:'Settings & friends'};
  const nav=document.createElement('nav');nav.className='page-nav';nav.setAttribute('aria-label','Main navigation');
- const pageDefs={home:'Home',game:'Play game',group:'Group room',shop:'Coin shop',chat:'Chat with host',history:'My game history',settings:'Settings & friends'};
- nav.innerHTML=Object.entries(pageDefs).map(([id,label])=>'<button type="button" class="btn" data-page="'+id+'" onclick="showPage(\''+id+'\')">'+({home:'⌂ ',game:'🎯 ',group:'👥 ',shop:'◈ ',chat:'✉ ',history:'▤ ',settings:'⚙ '}[id])+label+'</button>').join('');
+ nav.innerHTML=Object.entries(defs).map(([id,label])=>'<button type="button" class="btn" data-page="'+id+'" onclick="showPage(\\''+id+'\\')">'+label+'</button>').join('');
  layout.parentNode.insertBefore(nav,layout);
  const pages={};
- Object.entries(pageDefs).forEach(([id,title])=>{const p=document.createElement('section');p.className='page';p.id='page-'+id;p.setAttribute('aria-label',title);p.innerHTML='<div class="page-title"><span class="eyebrow">NBA DICE</span><h2>'+title+'</h2></div><div class="page-content"></div>';layout.appendChild(p);pages[id]=p.querySelector('.page-content')});
- pages.history.innerHTML='<div class="panel"><div class="section-head"><h2>▤ My game history</h2><span class="muted">YOUR ROLLS</span></div><div id="myHistoryList"></div><button class="btn dark" style="margin-top:12px" onclick="openGeneralHistory()">🔒 General game data · Host only</button><p class="notice">General game data is password-protected. Records are currently stored in this browser only.</p></div>';
+ Object.entries(defs).forEach(([id,title])=>{const p=document.createElement('section');p.className='page';p.id='page-'+id;p.innerHTML='<div class="page-title"><span class="eyebrow">NBA DICE</span><h2>'+title+'</h2></div><div class="page-content"></div>';layout.appendChild(p);pages[id]=p.querySelector('.page-content')});
+ pages.history.innerHTML='<div class="panel"><div class="section-head"><h2>My game history</h2></div><div id="myHistoryList"></div><button class="btn dark" style="margin-top:12px" onclick="openGeneralHistory()">Host game data</button></div>';
  [...main.children].forEach(el=>{
-  if(el.classList.contains('hero')||el.id==='profilePanel'||el.querySelector('#winnerList'))pages.home.appendChild(el);
-  else if(el.id==='socialPanel')pages.settings.appendChild(el);
-  else if(el.id==='gamePanel')pages.game.appendChild(el);
-  else if(el.querySelector('#groupInfo'))pages.group.appendChild(el);
-  else pages.home.appendChild(el);
+  if(el.id==='gamePanel'){pages.game.appendChild(el);return}
+  if(el.id==='socialPanel'){pages.settings.appendChild(el);return}
+  if(el.querySelector('#groupInfo')){
+   const group=el.querySelector('#groupInfo');
+   const groupPanel=document.createElement('div');groupPanel.className='panel';groupPanel.appendChild(group);pages.group.appendChild(groupPanel);
+   pages.home.appendChild(el);return;
+  }
+  pages.home.appendChild(el);
  });
  [...side.children].forEach(el=>{
-  if(el.id==='shopPanel')pages.shop.appendChild(el);
-  else if(el.querySelector('#chatLog'))pages.chat.appendChild(el);
-  else pages.home.appendChild(el);
+  if(el.querySelector('#chatLog')){pages.chat.appendChild(el);return}
+  if(el.id==='shopPanel'||el.id==='coinCalculator'||el.querySelector('#packageList')||el.querySelector('#exchangeForm')){pages.shop.appendChild(el);return}
+  pages.home.appendChild(el);
  });
  main.remove();side.remove();
- layout.removeAttribute('style');
- const css=document.createElement('style');
- css.textContent=`
- .page-nav{max-width:1180px;margin:16px auto 0;padding:0 22px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
- .page-nav .btn{background:#171818;border:1px solid #303232;color:#aaa;white-space:nowrap;padding:10px 13px}
- .page-nav .btn.active{background:#29261e;color:#e8c875;border-color:#9c7d3b}
- .layout{display:block!important;max-width:1180px!important;margin:0 auto!important;padding:20px 22px 60px!important}
- .layout>section.page{display:none!important;width:100%;max-width:980px;margin:0 auto}
- .layout>section.page.active{display:block!important;position:relative!important;visibility:visible!important;left:auto!important;pointer-events:auto!important}
- .page-title{margin:8px 0 18px}.page-title h2{font-size:25px;margin:7px 0 0}
- .page-content{display:flex;flex-direction:column;gap:18px;min-width:0}
+ const style=document.createElement('style');style.textContent=`
+ .page-nav{max-width:1180px;margin:14px auto 0;padding:0 22px;display:flex;gap:7px;flex-wrap:wrap}
+ .page-nav .btn{background:#171818;border:1px solid #303232;color:#c9c9c3;padding:10px 13px;font-size:12px}
+ .page-nav .btn.active{background:#302817;color:#f0cf7c;border-color:#b9954e}
+ .layout{display:block!important;max-width:1180px!important;padding:22px!important}
+ .layout>section.page{display:none!important;max-width:900px;margin:0 auto}
+ .layout>section.page.active{display:block!important}
+ .page-title{margin:6px 0 18px}.page-title h2{font-size:26px;margin:6px 0}
+ .page-content{display:flex;flex-direction:column;gap:16px;min-width:0}
  .page-content>.panel,.page-content>.hero{width:100%;min-width:0}
- #page-game #gamePanel{display:block!important;visibility:visible!important;width:100%!important;opacity:1!important}
- #page-game #diceBoard{display:grid!important;grid-template-columns:repeat(6,minmax(42px,1fr))!important;gap:10px!important;min-height:74px!important;width:100%!important;overflow:visible!important}
- #page-game #diceBoard>.die-result{display:grid!important;aspect-ratio:1/1!important;min-width:42px!important;visibility:visible!important;opacity:1!important}
- #page-game #diceBoard>.die-result .dot{display:block!important}
- #page-game #pickOne,#page-game #pickTwo{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important}
- @media(max-width:760px){.page-nav{padding:0 13px;gap:6px;flex-wrap:nowrap;overflow-x:auto}.page-nav .btn{padding:9px;font-size:11px}.layout{padding:17px 13px 40px!important}}
- `;
- document.head.appendChild(css);
- const baseSetMode=setMode;
- window.setMode=function(m){baseSetMode(m);if(m==='group'){showPage('group')}};
+ #page-game #gamePanel{display:block!important;visibility:visible!important;opacity:1!important}
+ #page-game #pickOne,#page-game #pickTwo{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:8px}
+ #page-game #diceBoard{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:10px;min-height:76px;margin:18px 0}
+ #page-game #diceBoard .die-result{display:grid!important;visibility:visible!important;opacity:1!important;min-width:0;aspect-ratio:1}
+ @media(max-width:700px){.page-nav{padding:0 12px;flex-wrap:nowrap;overflow-x:auto}.page-nav .btn{white-space:nowrap;padding:9px}.layout{padding:16px 12px!important}}
+ `;document.head.appendChild(style);
  window.showPage=function(id){
   if(!pages[id])id='home';
   document.querySelectorAll('.layout>section.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+id));
   document.querySelectorAll('.page-nav [data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
-  if(id==='group'){const info=pages.group.querySelector('#groupInfo');if(info)info.classList.remove('hidden')}
-  if(id==='game'){const panel=document.getElementById('gamePanel');if(panel&&panel.parentElement!==pages.game)pages.game.appendChild(panel);ensureSoloGameUI?.()}
+  if(id==='group'){const g=pages.group.querySelector('#groupInfo');if(g)g.classList.remove('hidden')}
+  if(id==='game')repairSoloControls();
   window.scrollTo({top:0,behavior:'smooth'});
  };
  window.showPage('game');

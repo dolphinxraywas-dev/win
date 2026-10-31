@@ -90,7 +90,8 @@ let gameHistory=[];function newGameId(){return 'NBA-'+Date.now().toString(36).to
  if(!layout||!main||!side)return;
  const defs={home:'Home',game:'Play game',group:'Group room',shop:'Coin shop',chat:'Chat with host',history:'Game history',settings:'Settings & friends'};
  const nav=document.createElement('nav');nav.className='page-nav';nav.setAttribute('aria-label','Main navigation');
- nav.innerHTML=Object.entries(defs).map(([id,label])=>'<button type="button" class="btn" data-page="'+id+'" onclick="showPage(\\''+id+'\\')">'+label+'</button>').join('');
+ nav.innerHTML=Object.entries(defs).map(([id,label])=>'<button type="button" class="btn" data-page="'+id+'">'+label+'</button>').join('');
+ nav.addEventListener('click',e=>{const b=e.target.closest('[data-page]');if(b)window.showPage(b.dataset.page)});
  layout.parentNode.insertBefore(nav,layout);
  const pages={};
  Object.entries(defs).forEach(([id,title])=>{const p=document.createElement('section');p.className='page';p.id='page-'+id;p.innerHTML='<div class="page-title"><span class="eyebrow">NBA DICE</span><h2>'+title+'</h2></div><div class="page-content"></div>';layout.appendChild(p);pages[id]=p.querySelector('.page-content')});
@@ -117,7 +118,8 @@ let gameHistory=[];function newGameId(){return 'NBA-'+Date.now().toString(36).to
  .page-nav .btn.active{background:#302817;color:#f0cf7c;border-color:#b9954e}
  .layout{display:block!important;max-width:1180px!important;padding:22px!important}
  .layout>section.page{display:none!important;max-width:900px;margin:0 auto}
- .layout>section.page.active{display:block!important}
+ .layout>section.page:not(.active){display:none!important}
+ .layout>section.page.active{display:block!important;visibility:visible!important}
  .page-title{margin:6px 0 18px}.page-title h2{font-size:26px;margin:6px 0}
  .page-content{display:flex;flex-direction:column;gap:16px;min-width:0}
  .page-content>.panel,.page-content>.hero{width:100%;min-width:0}
@@ -162,7 +164,8 @@ initDice();
  const panel=document.getElementById('gamePanel'),board=document.getElementById('diceBoard');
  if(!panel||!board)return;
  let stage=panel.querySelector('.dice-stage');
- if(!stage){stage=document.createElement('div');stage.className='dice-stage';stage.setAttribute('aria-label','Six dice rolling area');const heading=panel.querySelector('.section-head');if(heading)heading.insertAdjacentElement('afterend',stage);else panel.prepend(stage);stage.appendChild(board);}
+ if(!stage){stage=document.createElement('div');stage.className='dice-stage';stage.setAttribute('aria-label','Six dice rolling area');const heading=panel.querySelector('.section-head');if(heading)heading.insertAdjacentElement('afterend',stage);else panel.prepend(stage);}
+ stage.appendChild(board);
  board.replaceChildren();for(let i=0;i<6;i++)board.appendChild(makeDie(1));
 })();
 const dedicatedDiceStyle=document.createElement('style');
